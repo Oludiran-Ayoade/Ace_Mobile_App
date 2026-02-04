@@ -119,18 +119,11 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
         targetUserId = currentUser['id'];
       }
       
-      // Always fetch full profile from API (except for own profile which is already loaded)
-      if (targetUserId == currentUser['id']) {
-        // Viewing own profile - use current user data
-        profileData = currentUser;
-        _isViewingOwnProfile = true;
-      } else {
-        // Viewing another staff's profile - ALWAYS fetch from API to get full data
-        final response = await _apiService.getStaffById(targetUserId);
-        profileData = response['user'] ?? response;
-        _permissionLevel = response['permission_level'] ?? 'none';
-        _isViewingOwnProfile = false;
-      }
+      // ALWAYS fetch full profile from API to get complete data including all fields
+      final response = await _apiService.getStaffById(targetUserId);
+      profileData = response['user'] ?? response;
+      _permissionLevel = response['permission_level'] ?? 'none';
+      _isViewingOwnProfile = (targetUserId == currentUser['id']);
       
       // Determine if current user can edit this profile
       final targetDeptId = profileData['department_id']?.toString() ?? '';
