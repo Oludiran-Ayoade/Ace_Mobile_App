@@ -2355,7 +2355,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                           controller.text.isEmpty ? 'Not provided' : controller.text,
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                             color: const Color(0xFF1A1A1A),
                           ),
                           textAlign: TextAlign.right,
@@ -2364,7 +2364,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                       if (_isHR) ...[
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(Icons.edit, size: 20, color: Color(0xFF2196F3)),
+                          icon: const Icon(Icons.edit, size: 20, color: Color(0xFF4CAF50)),
                           onPressed: () {
                             setState(() {
                               _isEditing = true;
