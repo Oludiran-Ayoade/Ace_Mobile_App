@@ -388,11 +388,12 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
         _loadData();
       }
     } catch (e) {
+      print('❌ Profile update error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update profile: $e'),
+            content: Text('Failed to update profile: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

@@ -1365,6 +1365,9 @@ class ApiService {
   Future<void> updateStaffProfile(String userId, Map<String, dynamic> updates) async {
     try {
       final token = await getToken();
+      print('📤 Updating staff profile: $userId');
+      print('📦 Updates payload: ${jsonEncode(updates)}');
+      
       final response = await http.put(
         Uri.parse('$baseUrl/staff/$userId'),
         headers: {
@@ -1374,11 +1377,18 @@ class ApiService {
         body: jsonEncode(updates),
       );
 
+      print('📥 Response status: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
+
       if (response.statusCode != 200) {
         final error = jsonDecode(response.body);
+        print('❌ Update failed: ${error['error']}');
         throw Exception(error['error'] ?? 'Failed to update profile');
       }
+      
+      print('✅ Profile updated successfully');
     } catch (e) {
+      print('❌ API Error: $e');
       ErrorHandler.logError('updateStaffProfile', e);
       final errorMessage = await ErrorHandler.getErrorMessage(e);
       throw Exception(errorMessage);
