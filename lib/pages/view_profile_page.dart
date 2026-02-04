@@ -580,9 +580,9 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                           children: [
                             _buildPersonalInfoTab(),
                             _buildWorkExperienceTab(),
-                            if (_canViewSensitiveData) _buildDocumentsTab(),
-                            if (_canViewSensitiveData) _buildNextOfKinTab(),
-                            if (_canViewSensitiveData) _buildGuarantorsTab(),
+                            if (_canViewSensitiveData && !_isViewingOwnProfile) _buildDocumentsTab(),
+                            if (_canViewSensitiveData && !_isViewingOwnProfile) _buildNextOfKinTab(),
+                            if (_canViewSensitiveData && !_isViewingOwnProfile) _buildGuarantorsTab(),
                             _buildPromotionHistoryTab(),
                             if (_isViewingOwnProfile) _buildSecurityTab(),
                             if (_isGeneralStaff) _buildReviewsTab(),
@@ -845,7 +845,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                         ],
                       ),
                     ),
-                    if (_canViewSensitiveData)
+                    if (_canViewSensitiveData && !_isViewingOwnProfile)
                       Tab(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -856,7 +856,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                           ],
                         ),
                       ),
-                    if (_canViewSensitiveData)
+                    if (_canViewSensitiveData && !_isViewingOwnProfile)
                       Tab(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -867,7 +867,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                           ],
                         ),
                       ),
-                    if (_canViewSensitiveData)
+                    if (_canViewSensitiveData && !_isViewingOwnProfile)
                       Tab(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
