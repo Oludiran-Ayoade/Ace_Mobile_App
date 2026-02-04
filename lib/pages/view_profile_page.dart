@@ -280,6 +280,12 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
     _controllers['grade'] = TextEditingController(text: _staffData!['grade'] ?? '');
     _controllers['institution'] = TextEditingController(text: _staffData!['institution'] ?? '');
     
+    // Exam Scores
+    String examScoresText = '';
+    if (_staffData!['exam_scores'] != null && (_staffData!['exam_scores'] as List).isNotEmpty) {
+      examScoresText = ((_staffData!['exam_scores'] as List)[0] as Map<String, dynamic>)['score'] ?? '';
+    }
+    _controllers['exam_scores'] = TextEditingController(text: examScoresText);
     
     // Next of Kin
     _controllers['nok_name'] = TextEditingController(text: _staffData!['next_of_kin_name'] ?? '');
@@ -329,6 +335,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
         'course_of_study': _controllers['course_of_study']!.text,
         'grade': _controllers['grade']!.text,
         'institution': _controllers['institution']!.text,
+        'exam_scores': _controllers['exam_scores']!.text,
         
         // Next of Kin
         'next_of_kin': {
@@ -990,45 +997,9 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
             _buildEditableInfoRow('Course of Study', 'course_of_study'),
             _buildEditableInfoRow('Grade/Class', 'grade'),
             _buildEditableInfoRow('Institution', 'institution'),
+            _buildEditableInfoRow('Exam Scores', 'exam_scores'),
           ],
         ),
-        
-        // Exam Scores Section
-        if (_staffData?['exam_scores'] != null && (_staffData!['exam_scores'] as List).isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _buildSection(
-            title: 'Exam Scores',
-            icon: Icons.grade,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3E5F5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFCE93D8), width: 1),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.grade, color: Color(0xFFCE93D8), size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        (_staffData!['exam_scores'] as List).isNotEmpty 
-                          ? ((_staffData!['exam_scores'] as List)[0] as Map<String, dynamic>)['score'] ?? 'N/A'
-                          : 'N/A',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1A1A1A),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
       ],
     );
   }
