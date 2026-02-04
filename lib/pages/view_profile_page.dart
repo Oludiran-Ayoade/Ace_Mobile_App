@@ -151,8 +151,9 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
         // Determine tab count based on permissions
         int tabCount = 2; // Always have Personal + Work Experience tabs
         
-        // Only show Documents, Next of Kin, Guarantors for view_full permission or own profile
-        if (_canViewSensitiveData) {
+        // Only show Documents, Next of Kin, Guarantors for HR/CEO/COO viewing OTHER staff
+        // Staff CANNOT see these tabs when viewing their own profile
+        if (_canViewSensitiveData && !_isViewingOwnProfile) {
           tabCount += 3; // Documents, Next of Kin, Guarantors
         }
         
@@ -997,13 +998,68 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
 
   Widget _buildWorkExperienceTab() {
     final bool canEdit = _isHR || _isViewingOwnProfile;
+    
+    // Get Ace Mall role history
+    final roleHistory = _staffData?['role_history'];
+    List<Map<String, dynamic>> aceRolesList = [];
+    if (roleHistory != null && roleHistory is List) {
+      aceRolesList = List<Map<String, dynamic>>.from(roleHistory.map((e) => Map<String, dynamic>.from(e)));
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // ACE MALL EXPERIENCE SECTION
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.business, color: Color(0xFF2196F3), size: 24),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Ace Mall Experience',
+                style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Ace Mall role history
+          if (aceRolesList.isNotEmpty)
+            ...aceRolesList.map((role) => _buildAceMallExperienceCard(role))
+          else
+            Container(
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue[400], size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'No Ace Mall role history',
+                      style: GoogleFonts.inter(fontSize: 14, color: Colors.blue[700], fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          
+          const SizedBox(height: 24),
+          
+          // PREVIOUS WORK EXPERIENCE SECTION
           Row(
             children: [
               Container(
@@ -1016,31 +1072,38 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
               ),
               const SizedBox(width: 12),
               Text(
-                'Work Experience',
+                'Previous Work Experience',
                 style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           
-          // Existing work experiences
+          // External work experiences
           if (_workExperiences.isNotEmpty)
             ..._workExperiences.asMap().entries.map((entry) {
               final index = entry.key;
               final exp = entry.value;
               return _buildExperienceCard(exp, index, canEdit);
             })
-          else if (!canEdit)
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+          else
+            Container(
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Row(
                 children: [
-                  const SizedBox(height: 40),
-                  Icon(Icons.work_off_outlined, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No work experience recorded',
-                    style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                  Icon(Icons.work_off_outlined, color: Colors.grey[400], size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'No previous work experience',
+                      style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                    ),
                   ),
                 ],
               ),
@@ -1073,6 +1136,103 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
           // Add new work experience form - ONLY for HR/managers editing OTHER staff profiles
           if (canEdit && _showAddWorkExpForm && !_isViewingOwnProfile)
             _buildAddWorkExperienceForm(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAceMallExperienceCard(Map<String, dynamic> role) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF2196F3).withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      role['role_name'] ?? 'Role',
+                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        if (role['department_name'] != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[100],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              role['department_name'],
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue[800]),
+                            ),
+                          ),
+                        if (role['branch_name'] != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              role['branch_name'],
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green[800]),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Text(
+                  '${_formatDisplayDate(role['start_date'])} - ${_formatDisplayDate(role['end_date'])}',
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[700], fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          if (role['promotion_reason'] != null && role['promotion_reason'].toString().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 16, color: Color(0xFF2196F3)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      role['promotion_reason'],
+                      style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[700]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
