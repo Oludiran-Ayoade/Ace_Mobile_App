@@ -319,53 +319,56 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
     try {
       setState(() => _isLoading = true);
       
+      // Helper function to convert empty strings to null
+      String? nullIfEmpty(String value) => value.trim().isEmpty ? null : value.trim();
+      
       final updates = {
         // Basic Info
         'full_name': _controllers['full_name']!.text,
-        'email': _controllers['email']!.text,
-        'phone_number': _controllers['phone']!.text,
-        'employee_id': _controllers['employee_id']!.text,
-        'home_address': _controllers['address']!.text,
-        'gender': _controllers['gender']!.text,
-        'marital_status': _controllers['marital_status']!.text,
-        'state_of_origin': _controllers['state_of_origin']!.text,
-        'date_of_birth': _controllers['date_of_birth']!.text,
+        'email': nullIfEmpty(_controllers['email']!.text),
+        'phone_number': nullIfEmpty(_controllers['phone']!.text),
+        'employee_id': nullIfEmpty(_controllers['employee_id']!.text),
+        'home_address': nullIfEmpty(_controllers['address']!.text),
+        'gender': nullIfEmpty(_controllers['gender']!.text),
+        'marital_status': nullIfEmpty(_controllers['marital_status']!.text),
+        'state_of_origin': nullIfEmpty(_controllers['state_of_origin']!.text),
+        'date_of_birth': nullIfEmpty(_controllers['date_of_birth']!.text),
         'current_salary': double.tryParse(_controllers['salary']!.text) ?? 0,
         
         // Education
-        'course_of_study': _controllers['course_of_study']!.text,
-        'grade': _controllers['grade']!.text,
-        'institution': _controllers['institution']!.text,
-        'exam_scores': _controllers['exam_scores']!.text,
+        'course_of_study': nullIfEmpty(_controllers['course_of_study']!.text),
+        'grade': nullIfEmpty(_controllers['grade']!.text),
+        'institution': nullIfEmpty(_controllers['institution']!.text),
+        'exam_scores': nullIfEmpty(_controllers['exam_scores']!.text),
         
         // Next of Kin
         'next_of_kin': {
-          'full_name': _controllers['nok_name']!.text,
-          'relationship': _controllers['nok_relationship']!.text,
-          'phone': _controllers['nok_phone']!.text,
-          'email': _controllers['nok_email']!.text,
-          'home_address': _controllers['nok_home_address']!.text,
-          'work_address': _controllers['nok_work_address']!.text,
+          'full_name': nullIfEmpty(_controllers['nok_name']!.text),
+          'relationship': nullIfEmpty(_controllers['nok_relationship']!.text),
+          'phone': nullIfEmpty(_controllers['nok_phone']!.text),
+          'email': nullIfEmpty(_controllers['nok_email']!.text),
+          'home_address': nullIfEmpty(_controllers['nok_home_address']!.text),
+          'work_address': nullIfEmpty(_controllers['nok_work_address']!.text),
         },
         
         // Guarantor 1
         'guarantor_1': {
-          'full_name': _controllers['g1_name']!.text,
-          'phone': _controllers['g1_phone']!.text,
-          'occupation': _controllers['g1_occupation']!.text,
-          'relationship': _controllers['g1_relationship']!.text,
-          'home_address': _controllers['g1_address']!.text,
-          'email': _controllers['g1_email']!.text,
+          'full_name': nullIfEmpty(_controllers['g1_name']!.text),
+          'phone': nullIfEmpty(_controllers['g1_phone']!.text),
+          'occupation': nullIfEmpty(_controllers['g1_occupation']!.text),
+          'relationship': nullIfEmpty(_controllers['g1_relationship']!.text),
+          'home_address': nullIfEmpty(_controllers['g1_address']!.text),
+          'email': nullIfEmpty(_controllers['g1_email']!.text),
         },
         
         // Guarantor 2
         'guarantor_2': {
-          'full_name': _controllers['g2_name']!.text,
-          'phone': _controllers['g2_phone']!.text,
-          'occupation': _controllers['g2_occupation']!.text,
-          'relationship': _controllers['g2_relationship']!.text,
-          'home_address': _controllers['g2_address']!.text,
-          'email': _controllers['g2_email']!.text,
+          'full_name': nullIfEmpty(_controllers['g2_name']!.text),
+          'phone': nullIfEmpty(_controllers['g2_phone']!.text),
+          'occupation': nullIfEmpty(_controllers['g2_occupation']!.text),
+          'relationship': nullIfEmpty(_controllers['g2_relationship']!.text),
+          'home_address': nullIfEmpty(_controllers['g2_address']!.text),
+          'email': nullIfEmpty(_controllers['g2_email']!.text),
         },
       };
       
