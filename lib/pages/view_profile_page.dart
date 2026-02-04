@@ -1053,8 +1053,8 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
               ),
             ),
           
-          // Add work experience button
-          if (canEdit && !_showAddWorkExpForm)
+          // Add work experience button - ONLY for HR/managers editing OTHER staff profiles (NOT own profile)
+          if (canEdit && !_showAddWorkExpForm && !_isViewingOwnProfile)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: SizedBox(
@@ -1077,8 +1077,8 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
               ),
             ),
           
-          // Add new work experience form
-          if (canEdit && _showAddWorkExpForm)
+          // Add new work experience form - ONLY for HR/managers editing OTHER staff profiles
+          if (canEdit && _showAddWorkExpForm && !_isViewingOwnProfile)
             _buildAddWorkExperienceForm(),
         ],
       ),
@@ -1400,6 +1400,22 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
       
       _workExperiences.add(newExp);
       print('✅ Added to _workExperiences list. Total count: ${_workExperiences.length}');
+      
+      // Sort work experiences: most recent start_date first
+      _workExperiences.sort((a, b) {
+        final aEndDate = a['end_date']?.toString() ?? '';
+        final bEndDate = b['end_date']?.toString() ?? '';
+        
+        // Current jobs (no end_date) should be on top
+        if (aEndDate.isEmpty && bEndDate.isNotEmpty) return -1;
+        if (aEndDate.isNotEmpty && bEndDate.isEmpty) return 1;
+        
+        // Then sort by start_date descending (most recent first)
+        final aStartDate = a['start_date']?.toString() ?? '';
+        final bStartDate = b['start_date']?.toString() ?? '';
+        return bStartDate.compareTo(aStartDate);
+      });
+      print('✅ Sorted work experiences. Latest on top.');
       
       _showAddWorkExpForm = false;
       _isAceRole = false;
