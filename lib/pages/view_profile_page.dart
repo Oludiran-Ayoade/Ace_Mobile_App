@@ -1000,68 +1000,32 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
             title: 'Exam Scores',
             icon: Icons.grade,
             children: [
-              ...(_staffData!['exam_scores'] as List).map((exam) {
-                final examData = exam as Map<String, dynamic>;
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFF3E5F5), Color(0xFFE1F5FE)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3E5F5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFCE93D8), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.grade, color: Color(0xFFCE93D8), size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        (_staffData!['exam_scores'] as List).isNotEmpty 
+                          ? ((_staffData!['exam_scores'] as List)[0] as Map<String, dynamic>)['score'] ?? 'N/A'
+                          : 'N/A',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFCE93D8), width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFCE93D8),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.grade, color: Colors.white, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              examData['exam_type'] ?? 'Exam',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1A1A1A),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              examData['score'] ?? 'N/A',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF666666),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (examData['year_taken'] != null)
-                        Text(
-                          examData['year_taken'].toString(),
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF666666),
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
