@@ -987,6 +987,8 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
             _buildEditableInfoRow('Employee ID', 'employee_id'),
             _buildInfoRow('Date Joined', _formatDate(_staffData!['date_joined'])),
             _buildSalaryRow('Salary', _staffData!['current_salary'] ?? _staffData!['salary']),
+            if (_isHR)
+              _buildEditableInfoRowWithSave('Exam Scores', 'exam_scores'),
           ],
         ),
         const SizedBox(height: 12),
@@ -998,7 +1000,6 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
             _buildEditableInfoRow('Course of Study', 'course_of_study'),
             _buildEditableInfoRow('Grade/Class', 'grade'),
             _buildEditableInfoRow('Institution', 'institution'),
-            _buildEditableInfoRowWithSave('Exam Scores', 'exam_scores'),
           ],
         ),
       ],
@@ -2354,7 +2355,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                           controller.text.isEmpty ? 'Not provided' : controller.text,
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w900,
                             color: const Color(0xFF1A1A1A),
                           ),
                           textAlign: TextAlign.right,
