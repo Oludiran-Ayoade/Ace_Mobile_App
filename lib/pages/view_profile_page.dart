@@ -26,6 +26,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
   List<Map<String, dynamic>> _workExperiences = [];
   bool _isLoading = true;
   bool _isEditing = false;
+  String? _editingField;
   bool _isHR = false;
   bool _isGeneralStaff = false;
   bool _isViewingOwnProfile = false;
@@ -997,7 +998,7 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
             _buildEditableInfoRow('Course of Study', 'course_of_study'),
             _buildEditableInfoRow('Grade/Class', 'grade'),
             _buildEditableInfoRow('Institution', 'institution'),
-            _buildEditableInfoRow('Exam Scores', 'exam_scores'),
+            _buildEditableInfoRowWithSave('Exam Scores', 'exam_scores'),
           ],
         ),
       ],
@@ -2234,6 +2235,146 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
                       color: const Color(0xFF1A1A1A),
                     ),
                     textAlign: TextAlign.right,
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Special editable row with save button for exam scores
+  Widget _buildEditableInfoRowWithSave(String label, String controllerKey) {
+    final controller = _controllers[controllerKey];
+    if (controller == null) return _buildInfoRow(label, 'N/A');
+
+    // Track if this specific field is being edited
+    final isEditingThisField = _isEditing && _editingField == controllerKey;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[100]!, width: 1),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF616161),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: isEditingThisField
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      TextField(
+                        controller: controller,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1A1A1A),
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFCE93D8)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFCE93D8), width: 2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isEditing = false;
+                                _editingField = null;
+                                // Reset to original value
+                                _initializeControllers();
+                              });
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () async {
+                              await _saveChanges();
+                              setState(() {
+                                _isEditing = false;
+                                _editingField = null;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4CAF50),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            child: Text(
+                              'Save',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          controller.text.isEmpty ? 'Not provided' : controller.text,
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1A1A1A),
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                      if (_isHR) ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 20, color: Color(0xFF2196F3)),
+                          onPressed: () {
+                            setState(() {
+                              _isEditing = true;
+                              _editingField = controllerKey;
+                            });
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ],
                   ),
           ),
         ],
