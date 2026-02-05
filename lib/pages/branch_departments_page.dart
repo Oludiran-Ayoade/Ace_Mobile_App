@@ -461,6 +461,8 @@ class _BranchDepartmentsPageState extends State<BranchDepartmentsPage> {
 
   Color _getDepartmentColor(String name) {
     switch (name.toLowerCase()) {
+      case 'senior staffs':
+        return Colors.red;
       case 'supermarket':
         return Colors.blue;
       case 'lounge':
@@ -484,6 +486,8 @@ class _BranchDepartmentsPageState extends State<BranchDepartmentsPage> {
 
   IconData _getDepartmentIcon(String name) {
     switch (name.toLowerCase()) {
+      case 'senior staffs':
+        return Icons.workspace_premium;
       case 'supermarket':
         return Icons.shopping_cart;
       case 'lounge':
