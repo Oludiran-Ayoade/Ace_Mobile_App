@@ -1199,12 +1199,12 @@ class ApiService {
       if (branch != null) queryParams['branch'] = branch;
       if (search != null) queryParams['search'] = search;
 
-      final uri = Uri.parse('$baseUrl/staff/departed').replace(queryParameters: queryParams);
+      final uri = Uri.parse('$baseUrl/hr/terminated-staff').replace(queryParameters: queryParams);
       final response = await http.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data['terminated_staff'] ?? []);
+        return List<Map<String, dynamic>>.from(data['departed_staff'] ?? []);
       } else {
         final errorData = jsonDecode(response.body);
         throw Exception(errorData['error'] ?? 'Failed to fetch terminated staff');
