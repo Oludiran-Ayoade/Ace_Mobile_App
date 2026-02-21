@@ -97,39 +97,250 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
     return true;
   }
 
-  void _showTerminationDialog() {
-    final reasonController = TextEditingController();
-    DateTime? selectedDate;
-    String selectedType = 'terminated';
+  void _showTransferDialog() async {
+    String? selectedBranchId;
+    List<dynamic> branches = [];
+    
+    try {
+      branches = await _apiService.getBranches();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load branches: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          contentPadding: const EdgeInsets.all(24),
-          title: Text(
-            'Terminate Staff',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.red[700]),
+          contentPadding: const EdgeInsets.all(16),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          title: Row(
+            children: [
+              const Icon(Icons.swap_horiz, color: Color(0xFF2196F3)),
+              const SizedBox(width: 8),
+              Text(
+                'Transfer Staff',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF2196F3),
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.85, // Make it wider
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.9,
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Staff: ${widget.staff['full_name']}',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+                    widget.staff['full_name'] ?? '',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Current Branch: ${widget.staff['branch_name'] ?? 'Unknown'}',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Select New Branch',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: selectedBranchId,
+                    decoration: InputDecoration(
+                      labelText: 'New Branch *',
+                      labelStyle: const TextStyle(fontSize: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: 13),
+                    items: branches.map((branch) {
+                      return DropdownMenuItem<String>(
+                        value: branch.id,
+                        child: Text(branch.name ?? 'Unknown'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedBranchId = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.blue, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Staff role, department, and salary will remain unchanged',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: Colors.blue[800],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: GoogleFonts.inter(fontSize: 13)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2196F3),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              onPressed: selectedBranchId == null
+                  ? null
+                  : () async {
+                      Navigator.pop(context);
+
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(child: BouncingDotsLoader()),
+                      );
+
+                      try {
+                        await _apiService.promoteStaff(
+                          staffId: widget.staff['id'],
+                          branchId: selectedBranchId,
+                          newSalary: widget.staff['current_salary'],
+                        );
+
+                        if (mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${widget.staff['full_name']} has been transferred'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context, true);
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to transfer staff: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: Text('Transfer', style: GoogleFonts.inter(fontSize: 13)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTerminationDialog() {
+    final reasonController = TextEditingController();
+    DateTime? selectedDate;
+    String selectedType = 'terminated';
+
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenHeight < 700;
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          contentPadding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: screenWidth > 600 ? 40 : 12,
+            vertical: isSmallScreen ? 12 : 24,
+          ),
+          title: Text(
+            'Terminate Staff',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold, 
+              color: Colors.red[700], 
+              fontSize: isSmallScreen ? 16 : 18,
+            ),
+          ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: screenWidth > 600 ? 500 : screenWidth * 0.9,
+              maxHeight: isSmallScreen ? screenHeight * 0.5 : screenHeight * 0.55,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.staff['full_name'] ?? '',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, 
+                      fontSize: isSmallScreen ? 13 : 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: isSmallScreen ? 10 : 12),
                   DropdownButtonFormField<String>(
                     value: selectedType,
                     decoration: InputDecoration(
-                      labelText: 'Termination Type',
+                      labelText: 'Type',
+                      labelStyle: TextStyle(fontSize: isSmallScreen ? 12 : 14),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10, 
+                        vertical: isSmallScreen ? 8 : 10,
+                      ),
+                      isDense: true,
                     ),
+                    style: TextStyle(fontSize: isSmallScreen ? 13 : 14),
                     items: const [
                       DropdownMenuItem(value: 'terminated', child: Text('Terminated')),
                       DropdownMenuItem(value: 'resigned', child: Text('Resigned')),
@@ -144,18 +355,23 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: isSmallScreen ? 8 : 10),
                   TextField(
                     controller: reasonController,
                     decoration: InputDecoration(
-                      labelText: 'Reason for Departure *',
+                      labelText: 'Reason *',
+                      labelStyle: TextStyle(fontSize: isSmallScreen ? 12 : 14),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10, 
+                        vertical: isSmallScreen ? 8 : 10,
+                      ),
+                      isDense: true,
                     ),
-                    maxLines: 4,
+                    style: TextStyle(fontSize: isSmallScreen ? 13 : 14),
+                    maxLines: isSmallScreen ? 2 : 3,
                   ),
-                  const SizedBox(height: 16),
-                  // Calendar Picker
+                  SizedBox(height: isSmallScreen ? 8 : 10),
                   InkWell(
                     onTap: () async {
                       final DateTime? picked = await showDatePicker(
@@ -183,29 +399,34 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10, 
+                        vertical: isSmallScreen ? 8 : 10,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[400]!),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.calendar_today, color: Colors.grey[600], size: 20),
-                          const SizedBox(width: 12),
+                          Icon(Icons.calendar_today, color: Colors.grey[600], size: 16),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               selectedDate == null
-                                  ? 'Select Last Working Day'
+                                  ? 'Last Working Day'
                                   : DateFormat('yyyy-MM-dd').format(selectedDate!),
                               style: GoogleFonts.inter(
-                                fontSize: 15,
+                                fontSize: isSmallScreen ? 12 : 13,
                                 color: selectedDate == null ? Colors.grey[600] : Colors.black87,
                               ),
                             ),
                           ),
                           if (selectedDate != null)
                             IconButton(
-                              icon: const Icon(Icons.clear, size: 20),
+                              icon: const Icon(Icons.clear, size: 16),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               onPressed: () {
                                 setState(() {
                                   selectedDate = null;
@@ -223,13 +444,13 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: GoogleFonts.inter(fontSize: 15)),
+              child: Text('Cancel', style: GoogleFonts.inter(fontSize: 14)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red[700],
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               onPressed: () async {
                 if (reasonController.text.isEmpty) {
@@ -241,7 +462,6 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
 
                 Navigator.pop(context);
 
-                // Show loading
                 showDialog(
                   context: context,
                   barrierDismissible: false,
@@ -257,19 +477,18 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
                   );
 
                   if (mounted) {
-                    Navigator.pop(context); // Close loading
+                    Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('${widget.staff['full_name']} has been terminated'),
                         backgroundColor: Colors.green,
                       ),
                     );
-                    // Pop back with refresh flag
                     Navigator.pop(context, true);
                   }
                 } catch (e) {
                   if (mounted) {
-                    Navigator.pop(context); // Close loading
+                    Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Failed to terminate staff: $e'),
@@ -279,7 +498,7 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
                   }
                 }
               },
-              child: Text('Terminate', style: GoogleFonts.inter(fontSize: 15)),
+              child: Text('Terminate', style: GoogleFonts.inter(fontSize: 14)),
             ),
           ],
         ),
@@ -343,6 +562,13 @@ class _StaffDetailPageState extends State<StaffDetailPage> with SingleTickerProv
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
+                  // Transfer button
+                  if (_shouldShowTerminationButton())
+                    IconButton(
+                      icon: const Icon(Icons.swap_horiz, color: Colors.white),
+                      tooltip: 'Transfer Staff',
+                      onPressed: _showTransferDialog,
+                    ),
                   // Hide termination button if viewing own profile or if staff is already departed
                   if (_shouldShowTerminationButton())
                     IconButton(

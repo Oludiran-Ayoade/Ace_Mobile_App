@@ -42,8 +42,15 @@ class _FloorManagerTeamReviewsPageState extends State<FloorManagerTeamReviewsPag
           useBranchEndpoint: true,
         );
         
+        // Filter out the current logged-in user (floor manager can't review themselves)
+        final currentUserId = userData['id']?.toString();
+        final filteredStaff = staff.where((member) {
+          final memberId = member['id']?.toString();
+          return memberId != currentUserId;
+        }).toList();
+        
         setState(() {
-          _teamMembers = staff.map((s) => s as Map<String, dynamic>).toList();
+          _teamMembers = filteredStaff.map((s) => s as Map<String, dynamic>).toList();
           _isLoading = false;
         });
       }

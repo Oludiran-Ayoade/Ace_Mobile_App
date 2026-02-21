@@ -106,7 +106,10 @@ class AceMallApp extends StatelessWidget {
           );
         }
         if (settings.name == '/staff-detail') {
-          final staff = settings.arguments as Map<String, dynamic>;
+          final args = settings.arguments;
+          final staff = args is Map<String, dynamic> 
+              ? args 
+              : Map<String, dynamic>.from(args as Map);
           return MaterialPageRoute(
             builder: (context) => StaffDetailPage(staff: staff),
           );

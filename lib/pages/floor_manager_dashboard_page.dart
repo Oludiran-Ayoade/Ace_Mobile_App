@@ -17,7 +17,6 @@ class _FloorManagerDashboardPageState extends State<FloorManagerDashboardPage> {
   String? _errorMessage;
   int _teamMembers = 0;
   int _activeStaff = 0;
-  int _pendingReviews = 0;
 
   @override
   void initState() {
@@ -62,7 +61,6 @@ class _FloorManagerDashboardPageState extends State<FloorManagerDashboardPage> {
         _userData = userData;
         _teamMembers = stats['team_members'] ?? 0;
         _activeStaff = stats['active_staff'] ?? stats['team_members'] ?? 0;
-        _pendingReviews = stats['pending_reviews'] ?? 0;
         _isLoading = false;
       });
     } catch (e) {
@@ -277,16 +275,6 @@ class _FloorManagerDashboardPageState extends State<FloorManagerDashboardPage> {
                         value: '$_activeStaff',
                         subtitle: 'Staff',
                         color: const Color(0xFFFF9800),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.rate_review,
-                        title: 'Reviews',
-                        value: '$_pendingReviews',
-                        subtitle: 'Pending',
-                        color: const Color(0xFF9C27B0),
                       ),
                     ),
                   ],

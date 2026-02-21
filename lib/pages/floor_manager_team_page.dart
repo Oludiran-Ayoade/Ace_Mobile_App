@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bouncing_dots_loader.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
+import 'view_profile_page.dart';
 
 class FloorManagerTeamPage extends StatefulWidget {
   const FloorManagerTeamPage({super.key});
@@ -45,6 +46,15 @@ class _FloorManagerTeamPageState extends State<FloorManagerTeamPage> {
         filteredStaff = staff.where((member) {
           final memberSubDeptId = member['sub_department_id'];
           return memberSubDeptId != null && memberSubDeptId.toString() == subDepartmentId.toString();
+        }).toList();
+      }
+
+      // Exclude the current logged-in user from the team list
+      final currentUserId = userData['id']?.toString();
+      if (currentUserId != null) {
+        filteredStaff = filteredStaff.where((member) {
+          final memberId = member['id']?.toString();
+          return memberId != currentUserId;
         }).toList();
       }
 
@@ -185,10 +195,14 @@ class _FloorManagerTeamPageState extends State<FloorManagerTeamPage> {
   Widget _buildTeamMemberCard(Map<String, dynamic> member) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(
+        Navigator.push(
           context,
-          '/staff-detail',
-          arguments: member,
+          MaterialPageRoute(
+            builder: (context) => ViewProfilePage(
+              userId: member['id'],
+              staff: member,
+            ),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(20),

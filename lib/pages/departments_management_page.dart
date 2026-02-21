@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bouncing_dots_loader.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
+import 'view_profile_page.dart';
 
 class DepartmentsManagementPage extends StatefulWidget {
   const DepartmentsManagementPage({super.key});
@@ -14,6 +15,8 @@ class _DepartmentsManagementPageState extends State<DepartmentsManagementPage> {
   final ApiService _apiService = ApiService();
   List<Map<String, dynamic>> _departments = [];
   bool _isLoading = true;
+  static List<Map<String, dynamic>>? _cachedDepartments;
+  static DateTime? _lastFetch;
 
   @override
   void initState() {
@@ -24,6 +27,18 @@ class _DepartmentsManagementPageState extends State<DepartmentsManagementPage> {
   Future<void> _loadDepartments() async {
     setState(() => _isLoading = true);
     try {
+      // Use cache if less than 2 minutes old
+      if (_cachedDepartments != null && _lastFetch != null) {
+        final difference = DateTime.now().difference(_lastFetch!);
+        if (difference.inMinutes < 2) {
+          setState(() {
+            _departments = _cachedDepartments!;
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
       final depts = await _apiService.getDepartments();
       
       final allStaff = await _apiService.getAllStaff();
@@ -32,18 +47,25 @@ class _DepartmentsManagementPageState extends State<DepartmentsManagementPage> {
       
       for (var dept in depts) {
         // Find group head for this department
-        final groupHead = allStaff.firstWhere(
+        final groupHeadRaw = allStaff.firstWhere(
           (staff) =>
               staff['department_id'] == dept.id &&
               staff['role_name']?.toString().contains('Group Head') == true,
           orElse: () => null,
         );
+        
+        // Add permission level to group head
+        final groupHead = groupHeadRaw != null 
+            ? {...groupHeadRaw, 'permission_level': 'view_full'}
+            : null;
 
         // Count staff in this department
         final staffCount = allStaff.where((staff) => staff['department_id'] == dept.id).length;
 
-        // Get all staff in this department
-        final deptStaff = allStaff.where((staff) => staff['department_id'] == dept.id).toList();
+        // Get all staff in this department with permission level
+        final deptStaff = allStaff.where((staff) => staff['department_id'] == dept.id).map((staff) {
+          return {...staff, 'permission_level': 'view_full'};
+        }).toList();
 
         departmentsWithData.add({
           'id': dept.id,
@@ -58,6 +80,8 @@ class _DepartmentsManagementPageState extends State<DepartmentsManagementPage> {
       if (mounted) {
         setState(() {
           _departments = departmentsWithData;
+          _cachedDepartments = departmentsWithData;
+          _lastFetch = DateTime.now();
           _isLoading = false;
         });
       }
@@ -460,10 +484,14 @@ class _DepartmentsManagementPageState extends State<DepartmentsManagementPage> {
     
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(
+        Navigator.push(
           context,
-          '/staff-detail',
-          arguments: head,
+          MaterialPageRoute(
+            builder: (context) => ViewProfilePage(
+              userId: head['id'],
+              staff: Map<String, dynamic>.from(head as Map),
+            ),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(12),
@@ -566,10 +594,14 @@ class _DepartmentsManagementPageState extends State<DepartmentsManagementPage> {
     
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(
+        Navigator.push(
           context,
-          '/staff-detail',
-          arguments: staff,
+          MaterialPageRoute(
+            builder: (context) => ViewProfilePage(
+              userId: staff['id'],
+              staff: Map<String, dynamic>.from(staff as Map),
+            ),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(10),

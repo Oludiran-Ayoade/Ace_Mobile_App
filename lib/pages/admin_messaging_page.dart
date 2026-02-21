@@ -62,7 +62,7 @@ class _AdminMessagingPageState extends State<AdminMessagingPage> {
         title: _titleController.text,
         content: _contentController.text,
         targetType: _targetType,
-        targetBranchId: _selectedBranch?.id != null ? int.parse(_selectedBranch!.id) : null,
+        targetBranchId: _selectedBranch?.id,
       );
 
       if (mounted) {

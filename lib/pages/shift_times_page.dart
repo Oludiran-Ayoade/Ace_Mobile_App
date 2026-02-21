@@ -17,9 +17,9 @@ class _ShiftTimesPageState extends State<ShiftTimesPage> {
 
   // Default shift times
   final Map<String, Map<String, String>> _defaultShifts = {
-    'Morning': {'start': '06:00', 'end': '14:00'},
-    'Afternoon': {'start': '14:00', 'end': '22:00'},
-    'Evening': {'start': '22:00', 'end': '06:00'},
+    'Full Day': {'start': '08:30', 'end': '20:00'},
+    'Half Day Morning': {'start': '08:30', 'end': '14:00'},
+    'Half Day Evening': {'start': '15:00', 'end': '20:00'},
   };
 
   @override
@@ -111,12 +111,12 @@ class _ShiftTimesPageState extends State<ShiftTimesPage> {
 
   Color _getShiftColor(String shiftName) {
     switch (shiftName) {
-      case 'Morning':
+      case 'Full Day':
+        return Colors.green;
+      case 'Half Day Morning':
         return Colors.orange;
-      case 'Afternoon':
+      case 'Half Day Evening':
         return Colors.blue;
-      case 'Evening':
-        return Colors.purple;
       default:
         return Colors.grey;
     }
@@ -124,12 +124,12 @@ class _ShiftTimesPageState extends State<ShiftTimesPage> {
 
   IconData _getShiftIcon(String shiftName) {
     switch (shiftName) {
-      case 'Morning':
+      case 'Full Day':
         return Icons.wb_sunny;
-      case 'Afternoon':
-        return Icons.wb_cloudy;
-      case 'Evening':
-        return Icons.nightlight_round;
+      case 'Half Day Morning':
+        return Icons.wb_sunny_outlined;
+      case 'Half Day Evening':
+        return Icons.wb_twilight;
       default:
         return Icons.access_time;
     }

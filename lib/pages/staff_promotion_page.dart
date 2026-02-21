@@ -32,6 +32,7 @@ class _StaffPromotionPageState extends State<StaffPromotionPage> {
   String? _selectedDepartmentCategory;
   bool _showingDepartmentalRoles = false;
   bool _isSalaryIncreaseOnly = false;
+  bool _isTransferOnly = false;
 
   @override
   void initState() {
@@ -771,12 +772,78 @@ class _StaffPromotionPageState extends State<StaffPromotionPage> {
         const Divider(),
         const SizedBox(height: 16),
         
-        // Salary Increase Option (Can be selected alongside role change)
+        // Additional Options
         Text(
           'Additional Options',
           style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[700]),
         ),
         const SizedBox(height: 12),
+        
+        // Transfer Only Option - NEW
+        Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: _isTransferOnly ? Colors.blue : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: InkWell(
+            onTap: () => setState(() {
+              _isTransferOnly = !_isTransferOnly;
+              if (_isTransferOnly) {
+                _selectedRole = null; // Clear role selection for transfer only
+                _isSalaryIncreaseOnly = false;
+              }
+            }),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _isTransferOnly 
+                    ? Colors.blue.withValues(alpha: 0.05) 
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.swap_horiz, color: Colors.blue, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Transfer Only',
+                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Move to another branch without changing role or salary',
+                          style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_isTransferOnly)
+                    const Icon(Icons.check_circle, color: Colors.blue, size: 28)
+                  else
+                    Icon(Icons.circle_outlined, color: Colors.grey[400], size: 28),
+                ],
+              ),
+            ),
+          ),
+        ),
+        
+        // Salary Increase Option
         Card(
           margin: const EdgeInsets.only(bottom: 16),
           shape: RoundedRectangleBorder(
@@ -788,8 +855,10 @@ class _StaffPromotionPageState extends State<StaffPromotionPage> {
           ),
           child: InkWell(
             onTap: () => setState(() {
-              // Toggle salary increase flag - doesn't affect role selection
               _isSalaryIncreaseOnly = !_isSalaryIncreaseOnly;
+              if (_isSalaryIncreaseOnly) {
+                _isTransferOnly = false; // Clear transfer only if salary increase selected
+              }
             }),
             borderRadius: BorderRadius.circular(12),
             child: Container(
@@ -1378,7 +1447,7 @@ class _StaffPromotionPageState extends State<StaffPromotionPage> {
           if (_currentStep > 0)
             Expanded(
               child: OutlinedButton(
-                onPressed: () => setState(() => _currentStep--),
+                onPressed: () => _handleBack(),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   side: const BorderSide(color: Color(0xFF4CAF50)),
@@ -1391,7 +1460,7 @@ class _StaffPromotionPageState extends State<StaffPromotionPage> {
           Expanded(
             flex: 2,
             child: ElevatedButton(
-              onPressed: _canProceed() ? (_currentStep == 4 ? _promoteStaff : () => setState(() => _currentStep++)) : null,
+              onPressed: _canProceed() ? (_currentStep == 4 ? _promoteStaff : () => _handleNext()) : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: const Color(0xFF4CAF50),
@@ -1494,15 +1563,55 @@ class _StaffPromotionPageState extends State<StaffPromotionPage> {
     }
   }
 
+  void _handleNext() {
+    setState(() {
+      if (_isTransferOnly) {
+        // Transfer Only: Skip role step (1) and salary step (3)
+        if (_currentStep == 1) {
+          _currentStep = 2; // Go to branch selection
+        } else if (_currentStep == 2) {
+          // Set salary to current salary and skip to review
+          _newSalaryController.text = _formatCurrency(_selectedStaff?['current_salary'] ?? 0);
+          _currentStep = 4; // Skip salary step, go to review
+        } else {
+          _currentStep++;
+        }
+      } else {
+        _currentStep++;
+      }
+    });
+  }
+
+  void _handleBack() {
+    setState(() {
+      if (_isTransferOnly) {
+        // Transfer Only: Go back from review to branch, or branch to role step
+        if (_currentStep == 4) {
+          _currentStep = 2; // Go back to branch selection
+        } else if (_currentStep == 2) {
+          _currentStep = 1; // Go back to role step
+        } else {
+          _currentStep--;
+        }
+      } else {
+        _currentStep--;
+      }
+    });
+  }
+
   bool _canProceed() {
     switch (_currentStep) {
       case 0: return _selectedStaff != null;
       case 1: {
-        // Allow proceeding if Salary Increase Only OR a role is selected
-        return _isSalaryIncreaseOnly || _selectedRole != null;
+        // Allow proceeding if Transfer Only, Salary Increase Only, OR a role is selected
+        return _isTransferOnly || _isSalaryIncreaseOnly || _selectedRole != null;
       }
       case 2: {
-        // All promotions can optionally include branch change - always allow to proceed
+        // For Transfer Only, must select a branch
+        if (_isTransferOnly) {
+          return _selectedBranchId != null;
+        }
+        // All other promotions can optionally include branch change
         return true;
       }
       case 3: return _newSalaryController.text.isNotEmpty && int.tryParse(_parseFormattedSalary(_newSalaryController.text)) != null;

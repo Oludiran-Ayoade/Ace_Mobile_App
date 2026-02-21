@@ -29,10 +29,9 @@ class _RosterManagementPageState extends State<RosterManagementPage> {
   ];
   
   final List<Map<String, dynamic>> _shiftTypes = [
-    {'name': 'Morning', 'icon': Icons.wb_sunny, 'color': Color(0xFFFF9800), 'short': 'M'},
-    {'name': 'Afternoon', 'icon': Icons.wb_cloudy, 'color': Color(0xFF2196F3), 'short': 'A'},
-    {'name': 'Evening', 'icon': Icons.nightlight_round, 'color': Color(0xFF9C27B0), 'short': 'E'},
-    {'name': 'Off', 'icon': Icons.block, 'color': Color(0xFF9E9E9E), 'short': '-'},
+    {'name': 'Full Day', 'icon': Icons.wb_sunny, 'color': Color(0xFFFF9800), 'short': 'F'},
+    {'name': 'Half Day', 'icon': Icons.wb_twilight, 'color': Color(0xFF2196F3), 'short': 'H'},
+    {'name': 'Off Day', 'icon': Icons.block, 'color': Color(0xFF9E9E9E), 'short': '-'},
   ];
 
   @override
@@ -124,7 +123,7 @@ class _RosterManagementPageState extends State<RosterManagementPage> {
         final staffId = member['id'].toString();
         _roster[staffId] = {};
         for (var day in _daysOfWeek) {
-          _roster[staffId]![day['short']!] = 'Off';
+          _roster[staffId]![day['short']!] = 'Off Day';
         }
       }
     });
@@ -158,12 +157,11 @@ class _RosterManagementPageState extends State<RosterManagementPage> {
                 'sunday': 'Sun',
               };
               
-              // Map shift types to display names (database uses 'day', 'afternoon', 'night')
+              // Map shift types to display names (database uses 'full_day', 'half_day', 'off')
               final shiftMap = {
-                'day': 'Morning',
-                'afternoon': 'Afternoon',
-                'night': 'Evening',
-                'off': 'Off',
+                'full_day': 'Full Day',
+                'half_day': 'Half Day',
+                'off': 'Off Day',
               };
               
               final dayShort = dayMap[dayOfWeek.toLowerCase()];
@@ -206,26 +204,24 @@ class _RosterManagementPageState extends State<RosterManagementPage> {
         'Sun': 'sunday',
       };
       
-      // Map shift names to types (database uses 'day', 'afternoon', 'night')
+      // Map shift names to types (database uses 'full_day', 'half_day', 'off')
       final shiftMap = {
-        'Morning': 'day',
-        'Afternoon': 'afternoon',
-        'Evening': 'night',
-        'Off': 'off',
+        'Full Day': 'full_day',
+        'Half Day': 'half_day',
+        'Off Day': 'off',
       };
       
       // Get shift times from shift templates (default times for now)
       final shiftTimes = {
-        'Morning': {'start': '07:00:00', 'end': '15:00:00'},
-        'Afternoon': {'start': '15:00:00', 'end': '23:00:00'},
-        'Evening': {'start': '23:00:00', 'end': '07:00:00'},
-        'Off': {'start': '00:00:00', 'end': '00:00:00'},
+        'Full Day': {'start': '07:00:00', 'end': '19:00:00'},
+        'Half Day': {'start': '07:00:00', 'end': '13:00:00'},
+        'Off Day': {'start': '00:00:00', 'end': '00:00:00'},
       };
       
       _roster.forEach((staffId, shifts) {
         shifts.forEach((dayShort, shiftName) {
           // Only add non-off shifts to the roster
-          if (shiftName != 'Off') {
+          if (shiftName != 'Off Day') {
             final dayFull = dayMap[dayShort];
             final shiftType = shiftMap[shiftName];
             final times = shiftTimes[shiftName];

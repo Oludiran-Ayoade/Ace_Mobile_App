@@ -26,9 +26,31 @@ class ApiService {
   // Cache for frequently accessed data
   static List<Branch>? _cachedBranches;
   static List<Department>? _cachedDepartments;
+  static List<Role>? _cachedRoles;
+  static Map<String, List<dynamic>>? _cachedStaff; // Key: branchId_departmentId
   static DateTime? _branchCacheTime;
   static DateTime? _departmentCacheTime;
+  static DateTime? _roleCacheTime;
+  static DateTime? _staffCacheTime;
   static const Duration _cacheExpiry = Duration(hours: 1);
+  static const Duration _staffCacheExpiry = Duration(minutes: 5);
+  
+  // Clear all caches (call after mutations like creating/editing staff)
+  static void clearStaffCache() {
+    _cachedStaff = null;
+    _staffCacheTime = null;
+  }
+  
+  static void clearAllCaches() {
+    _cachedBranches = null;
+    _cachedDepartments = null;
+    _cachedRoles = null;
+    _cachedStaff = null;
+    _branchCacheTime = null;
+    _departmentCacheTime = null;
+    _roleCacheTime = null;
+    _staffCacheTime = null;
+  }
 
   static http.Client _getClient() {
     if (_client != null) return _client!;
@@ -715,7 +737,6 @@ class ApiService {
   Future<List<Branch>> getBranches() async {
     // Return cached data if available and valid
     if (_isCacheValid(_branchCacheTime) && _cachedBranches != null) {
-      print('[API] Returning ${_cachedBranches!.length} cached branches');
       return _cachedBranches!;
     }
 
@@ -731,12 +752,9 @@ class ApiService {
         final branchesJson = data['branches'] as List;
         final branches = branchesJson.map((json) => Branch.fromJson(json)).toList();
         
-        print('[API] Fetched ${branches.length} branches from backend');
-        
         // Cache the result
         _cachedBranches = branches;
         _branchCacheTime = DateTime.now();
-        
         return branches;
       } else {
         throw Exception('Failed to fetch data');
@@ -766,10 +784,9 @@ class ApiService {
         final departmentsJson = data['departments'] as List;
         final departments = departmentsJson.map((json) => Department.fromJson(json)).toList();
         
-        // Cache the result
+        // Cache the departments
         _cachedDepartments = departments;
         _departmentCacheTime = DateTime.now();
-        
         return departments;
       } else {
         throw Exception('Failed to fetch data');
@@ -802,7 +819,13 @@ class ApiService {
     }
   }
 
-  Future<List<Role>> getRoles({String? category, String? departmentId}) async {
+  Future<List<Role>> getRoles({String? category, String? departmentId, bool forceRefresh = false}) async {
+    // Return cached data if no filters and cache is valid
+    if (!forceRefresh && category == null && departmentId == null && 
+        _isCacheValid(_roleCacheTime) && _cachedRoles != null) {
+      return _cachedRoles!;
+    }
+    
     try {
       var url = '$baseUrl/data/roles';
       final queryParams = <String>[];
@@ -827,7 +850,15 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final rolesJson = data['roles'] as List;
-        return rolesJson.map((json) => Role.fromJson(json)).toList();
+        final roles = rolesJson.map((json) => Role.fromJson(json)).toList();
+        
+        // Cache only if no filters applied (all roles)
+        if (category == null && departmentId == null) {
+          _cachedRoles = roles;
+          _roleCacheTime = DateTime.now();
+        }
+        
+        return roles;
       } else {
         throw Exception('Failed to load roles');
       }
@@ -911,16 +942,26 @@ class ApiService {
     String? roleCategory,
     String? search,
     bool useBranchEndpoint = false,
+    bool forceRefresh = false,
   }) async {
     try {
+      // Generate cache key based on parameters
+      final cacheKey = '${branchId ?? 'all'}_${departmentId ?? 'all'}_${roleCategory ?? 'all'}_${useBranchEndpoint ? 'branch' : 'hr'}';
+      
+      // Check cache first (skip for searches to ensure fresh results)
+      if (!forceRefresh && search == null && _cachedStaff != null && _staffCacheTime != null) {
+        final cacheAge = DateTime.now().difference(_staffCacheTime!);
+        if (cacheAge < _staffCacheExpiry && _cachedStaff!.containsKey(cacheKey)) {
+          return _cachedStaff![cacheKey]!;
+        }
+      }
+      
       var endpoint = useBranchEndpoint ? '$baseUrl/branch/staff' : '$baseUrl/hr/staff';
       var url = '$endpoint?';
       if (branchId != null) url += 'branch_id=$branchId&';
       if (departmentId != null) url += 'department_id=$departmentId&';
       if (roleCategory != null) url += 'role_category=$roleCategory&';
       if (search != null) url += 'search=$search&';
-
-      final token = await getToken();
 
       final response = await http.get(
         Uri.parse(url),
@@ -929,7 +970,16 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['staff'] as List;
+        final staffList = data['staff'] as List;
+        
+        // Cache the result (only for non-search queries)
+        if (search == null) {
+          _cachedStaff ??= {};
+          _cachedStaff![cacheKey] = staffList;
+          _staffCacheTime = DateTime.now();
+        }
+        
+        return staffList;
       } else {
         throw Exception('Failed to load staff: ${response.statusCode}');
       }
@@ -1401,18 +1451,22 @@ class ApiService {
     required String title,
     required String content,
     required String targetType,
-    int? targetBranchId,
+    String? targetBranchId,
+    String? targetDepartmentId,
   }) async {
     try {
+      final body = {
+        'title': title,
+        'content': content,
+        'target_type': targetType,
+      };
+      if (targetBranchId != null) body['target_branch_id'] = targetBranchId;
+      if (targetDepartmentId != null) body['target_department_id'] = targetDepartmentId;
+      
       final response = await http.post(
         Uri.parse('$baseUrl/messages/send'),
         headers: await _getHeaders(includeAuth: true),
-        body: jsonEncode({
-          'title': title,
-          'content': content,
-          'target_type': targetType,
-          'target_branch_id': targetBranchId,
-        }),
+        body: jsonEncode(body),
       );
 
       if (response.statusCode != 200) {
