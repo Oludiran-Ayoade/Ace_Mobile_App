@@ -735,12 +735,18 @@ class _ViewProfilePageState extends State<ViewProfilePage> with TickerProviderSt
               const SizedBox(height: 16),
               
               // Name
-              Text(
-                _staffData!['full_name'] ?? 'Unknown',
-                style: GoogleFonts.inter(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A1A),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  _staffData!['full_name'] ?? 'Unknown',
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A1A1A),
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
